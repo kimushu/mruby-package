@@ -1,0 +1,6 @@
+[submodule "Harmony/mruby-1.4.x"]
+	path = Harmony/mruby-1.4.x
+	url = https://github.com/kimushu/mruby.git
+[submodule "Harmony/mruby-2.0.x"]
+	path = Harmony/mruby-2.0.x
+	url = https://github.com/kimushu/mruby.git
