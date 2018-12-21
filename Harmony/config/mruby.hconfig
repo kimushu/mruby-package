@@ -1,0 +1,297 @@
+menu "Runtime"
+
+    config USE_3RDPARTY_MRUBY_NEEDED
+        bool
+
+    config USE_3RDPARTY_MRUBY
+        bool "Use mruby?"
+        default y if USE_3RDPARTY_MRUBY_NEEDED
+        default n
+
+    menu "mruby" depends on USE_3RDPARTY_MRUBY
+
+        enum MRUBY_VERSION_LIST
+            "2.0.0" || "1.4.1"
+
+        enum MRUBY_METHOD_CACHE_SIZE_LIST
+            "128" || "256" || "512" || "1024" || "2048" || "4096"
+
+        config MRUBY_VERSION
+            string "mruby version"
+            depends on USE_3RDPARTY_MRUBY
+            range MRUBY_VERSION_LIST
+            default "2.0.0"
+
+        menu "stdio setting"
+
+            config MRB_DISABLE_STDIO
+                bool "MRB_DISABLE_STDIO - Disables <stdio.h> functions"
+                depends on USE_3RDPARTY_MRUBY
+                default n
+
+        endmenu
+
+        menu "Debug macros"
+
+            config MRB_ENABLE_DEBUG_HOOK
+                string "MRB_ENABLE_DEBUG_HOOK - Code fetch hook code"
+                depends on USE_3RDPARTY_MRUBY
+                default ""
+
+            config MRB_DEBUG
+                bool "MRB_DEBUG - Enable mrb_assert* macros"
+                depends on USE_3RDPARTY_MRUBY
+                default n
+
+        endmenu
+
+        menu "Stack configuration"
+
+            config MRB_STACK_EXTEND_DOUBLING
+                bool "MRB_STACK_EXTEND_DOUBLING - Doubles the stack size when extending it"
+                default n
+
+            config MRB_STACK_GROWTH
+                int "MRB_STACK_GROWTH - Stack growth size"
+                depends on USE_3RDPARTY_MRUBY && (!MRB_STACK_EXTEND_DOUBLING)
+                default 128
+
+            config MRB_STACK_MAX
+                string "MRB_STACK_MAX - Maximum size of stack"
+                depends on USE_3RDPARTY_MRUBY
+                default "default"
+
+        endmenu
+
+        menu "Primitive type configuration"
+
+            config MRB_USE_FLOAT
+                bool "MRB_USE_FLOAT - Use float instead of double for floating point numbers"
+                depends on USE_3RDPARTY_MRUBY && !MRB_WITHOUT_FLOAT && !MRB_NAN_BOXING
+                default n
+
+            config MRB_WITHOUT_FLOAT
+                bool "MRB_WITHOUT_FLOAT - Exclude floating point numbers"
+                depends on USE_3RDPARTY_MRUBY && !MRB_USE_FLOAT && !MRB_NAN_BOXING
+                default n
+
+            choice MRB_INT_SIZE
+                prompt "MRB_INTxx - Specify bits for integer (mrb_int)"
+                depends on USE_3RDPARTY_MRUBY
+                default MRB_INT32
+
+                config MRB_INT16
+                    bool "MRB_INT16 - 16-bit"
+
+                config MRB_INT32
+                    bool "MRB_INT32 - 32-bit"
+
+                config MRB_INT64
+                    bool "MRB_INT64 - 64-bit"
+
+            endchoice
+
+        endmenu
+
+        menu "Garbage collector configuration"
+
+            config MRB_GC_STRESS
+                bool "MRB_GC_STRESS - Emit full GC per each RBasic allocation"
+                depends on USE_3RDPARTY_MRUBY
+                default n
+
+            config MRB_GC_TURN_OFF_GENERATIONAL
+                bool "MRB_GC_TURN_OFF_GENERATIONAL - Turn off generational GC by default"
+                depends on USE_3RDPARTY_MRUBY
+                default n
+
+            config MRB_GC_FIXED_ARENA
+                bool "MRB_GC_FIXED_ARENA - Use fixed size GC arena"
+                depends on USE_3RDPARTY_MRUBY
+                default n
+
+            config MRB_GC_ARENA_SIZE
+                int "MRB_GC_ARENA_SIZE - Arena size"
+                depends on USE_3RDPARTY_MRUBY && MRB_GC_FIXED_ARENA
+                default 100
+
+            config MRB_HEAP_PAGE_SIZE
+                int "MRB_HEAP_PAGE_SIZE - Number of object per heap page"
+                depends on USE_3RDPARTY_MRUBY
+                default 1024
+
+        endmenu
+
+        menu "Memory pool configuration"
+
+            config MRUBY_POOL_ALIGNMENT
+                int
+                depends on USE_3RDPARTY_MRUBY
+                default 4
+
+            config MRUBY_POOL_PAGE_SIZE
+                int "POOL_PAGE_SIZE - Page size of memory pool"
+                depends on USE_3RDPARTY_MRUBY
+                default 16000
+
+        endmenu
+
+        menu "State atexit configuration"
+
+            config MRB_FIXED_STATE_ATEXIT_STACK
+                bool "MRB_FIXED_STATE_ATEXIT_STACK - Use fixed size mrb_state atexit stack"
+                depends on USE_3RDPARTY_MRUBY
+                default n
+
+            config MRB_FIXED_STATE_ATEXIT_STACK_SIZE
+                int "MRB_FIXED_STATE_ATEXIT_STACK_SIZE - State atexit stack size"
+                depends on USE_3RDPARTY_MRUBY && MRB_FIXED_STATE_ATEXIT_STACK
+                default 5
+
+        endmenu
+
+        menu "mrb_value configuration"
+
+            # Ignore MRB_ENDIAN_BIG
+            # (PIC32M is a little-endian machine)
+
+            config MRB_NAN_BOXING
+                bool "MRB_NAN_BOXING - Represent mrb_value in boxed double"
+                depends on USE_3RDPARTY_MRUBY && !MRB_WORD_BOXING
+                persistent if MRB_USE_FLOAT || MRB_WITHOUT_FLOAT || MRB_WORD_BOXING
+                default n
+
+            config MRB_WORD_BOXING
+                bool "MRB_WORD_BOXING - Represent mrb_value as a word (natural unit of data for the processor)"
+                depends on USE_3RDPARTY_MRUBY && !MRB_NAN_BOXING
+                default n
+
+        endmenu
+
+        menu "Instance variable configuration"
+
+            config MRB_IV_SEGMENT_SIZE
+                int "MRB_IV_SEGMENT_SIZE - Specifies size of each segment in segment list"
+                depends on USE_3RDPARTY_MRUBY
+                default 4
+
+        endmenu
+
+        menu "Other configuration"
+
+            config MRB_UTF8_STRING
+                bool "MRB_UTF8_STRING - String class to handle UTF-8 encoding"
+                depends on USE_3RDPARTY_MRUBY
+                default n
+
+            config MRB_FUNCALL_ARGC_MAX
+                int "MRB_FUNCALL_ARGC_MAX - argv max size in mrb_funcall"
+                depends on USE_3RDPARTY_MRUBY
+                default 16
+
+            config MRUBY_KHASH_DEFAULT_SIZE
+                int "KHASH_DEFAULT_SIZE - Default size of khash table bucket"
+                depends on USE_3RDPARTY_MRUBY
+                default 32
+
+            config MRB_STR_BUF_MIN_SIZE
+                int "MRB_STR_BUF_MIN_SIZE - Initial minimum size for string buffer"
+                depends on USE_3RDPARTY_MRUBY
+                default 128
+
+            config MRB_METHOD_CACHE
+                bool "MRB_METHOD_CACHE - Use method cache to improve performance"
+                depends on USE_3RDPARTY_MRUBY
+                default n
+
+            config MRB_METHOD_CACHE_SIZE
+                string "MRB_METHOD_CACHE_SIZE - Size of the method cache (need to be the power of 2)"
+                depends on USE_3RDPARTY_MRUBY && MRB_METHOD_CACHE
+                range MRUBY_METHOD_CACHE_SIZE_LIST
+                default "128"
+
+            config MRB_METHOD_TABLE_INLINE
+                bool "MRB_METHOD_TABLE_INLINE - Reduce the size of method table"
+                depends on USE_3RDPARTY_MRUBY
+                default n
+
+            # Ignore MRB_USE_ETEXT_EDATA and MRB_NO_INIT_ARRAY_START
+            # (_etext and _edata are *not* available)
+
+        endmenu
+
+    endmenu
+
+endmenu
+
+ifblock USE_3RDPARTY_MRUBY
+
+    ifblock MRUBY_VERSION = "2.0.0"
+        template MRUBY_mrbconf_h "$HARMONY_VERSION_PATH/third_party/mruby/mruby-2.0.x/include/mrbconf.h.ftl" to "$PROJECT_HEADER_FILES/app/system_config/$CONFIGURATION/mrbconf.h"
+        file MRUBY_mruby_h "$HARMONY_VERSION_PATH/third_party/mruby/mruby-2.0.x/include/mruby.h" to "$PROJECT_HEADER_FILES/third_party/mruby/include/mruby.h"
+
+        file MRUBY_array_h "$HARMONY_VERSION_PATH/third_party/mruby/mruby-2.0.x/include/mruby/array.h" to "$PROJECT_HEADER_FILES/third_party/mruby/include/mruby/array.h"
+        file MRUBY_boxing_nan_h "$HARMONY_VERSION_PATH/third_party/mruby/mruby-2.0.x/include/mruby/boxing_nan.h" to "$PROJECT_HEADER_FILES/third_party/mruby/include/mruby/boxing_nan.h"
+        file MRUBY_boxing_no_h "$HARMONY_VERSION_PATH/third_party/mruby/mruby-2.0.x/include/mruby/boxing_no.h" to "$PROJECT_HEADER_FILES/third_party/mruby/include/mruby/boxing_no.h"
+        file MRUBY_boxing_word_h "$HARMONY_VERSION_PATH/third_party/mruby/mruby-2.0.x/include/mruby/boxing_word.h" to "$PROJECT_HEADER_FILES/third_party/mruby/include/mruby/boxing_word.h"
+        file MRUBY_class_h "$HARMONY_VERSION_PATH/third_party/mruby/mruby-2.0.x/include/mruby/class.h" to "$PROJECT_HEADER_FILES/third_party/mruby/include/mruby/class.h"
+        file MRUBY_common_h "$HARMONY_VERSION_PATH/third_party/mruby/mruby-2.0.x/include/mruby/common.h" to "$PROJECT_HEADER_FILES/third_party/mruby/include/mruby/common.h"
+        file MRUBY_compile_h "$HARMONY_VERSION_PATH/third_party/mruby/mruby-2.0.x/include/mruby/compile.h" to "$PROJECT_HEADER_FILES/third_party/mruby/include/mruby/compile.h"
+        file MRUBY_data_h "$HARMONY_VERSION_PATH/third_party/mruby/mruby-2.0.x/include/mruby/data.h" to "$PROJECT_HEADER_FILES/third_party/mruby/include/mruby/data.h"
+        file MRUBY_debug_h "$HARMONY_VERSION_PATH/third_party/mruby/mruby-2.0.x/include/mruby/debug.h" to "$PROJECT_HEADER_FILES/third_party/mruby/include/mruby/debug.h"
+        file MRUBY_dump_h "$HARMONY_VERSION_PATH/third_party/mruby/mruby-2.0.x/include/mruby/dump.h" to "$PROJECT_HEADER_FILES/third_party/mruby/include/mruby/dump.h"
+        file MRUBY_error_h "$HARMONY_VERSION_PATH/third_party/mruby/mruby-2.0.x/include/mruby/error.h" to "$PROJECT_HEADER_FILES/third_party/mruby/include/mruby/error.h"
+        file MRUBY_gc_h "$HARMONY_VERSION_PATH/third_party/mruby/mruby-2.0.x/include/mruby/gc.h" to "$PROJECT_HEADER_FILES/third_party/mruby/include/mruby/gc.h"
+        file MRUBY_hash_h "$HARMONY_VERSION_PATH/third_party/mruby/mruby-2.0.x/include/mruby/hash.h" to "$PROJECT_HEADER_FILES/third_party/mruby/include/mruby/hash.h"
+        file MRUBY_irep_h "$HARMONY_VERSION_PATH/third_party/mruby/mruby-2.0.x/include/mruby/irep.h" to "$PROJECT_HEADER_FILES/third_party/mruby/include/mruby/irep.h"
+        file MRUBY_istruct_h "$HARMONY_VERSION_PATH/third_party/mruby/mruby-2.0.x/include/mruby/istruct.h" to "$PROJECT_HEADER_FILES/third_party/mruby/include/mruby/istruct.h"
+        file MRUBY_khash_h "$HARMONY_VERSION_PATH/third_party/mruby/mruby-2.0.x/include/mruby/khash.h" to "$PROJECT_HEADER_FILES/third_party/mruby/include/mruby/khash.h"
+        file MRUBY_numeric_h "$HARMONY_VERSION_PATH/third_party/mruby/mruby-2.0.x/include/mruby/numeric.h" to "$PROJECT_HEADER_FILES/third_party/mruby/include/mruby/numeric.h"
+        file MRUBY_object_h "$HARMONY_VERSION_PATH/third_party/mruby/mruby-2.0.x/include/mruby/object.h" to "$PROJECT_HEADER_FILES/third_party/mruby/include/mruby/object.h"
+        file MRUBY_opcode_h "$HARMONY_VERSION_PATH/third_party/mruby/mruby-2.0.x/include/mruby/opcode.h" to "$PROJECT_HEADER_FILES/third_party/mruby/include/mruby/opcode.h"
+        file MRUBY_ops_h "$HARMONY_VERSION_PATH/third_party/mruby/mruby-2.0.x/include/mruby/ops.h" to "$PROJECT_HEADER_FILES/third_party/mruby/include/mruby/ops.h"
+        file MRUBY_proc_h "$HARMONY_VERSION_PATH/third_party/mruby/mruby-2.0.x/include/mruby/proc.h" to "$PROJECT_HEADER_FILES/third_party/mruby/include/mruby/proc.h"
+        file MRUBY_range_h "$HARMONY_VERSION_PATH/third_party/mruby/mruby-2.0.x/include/mruby/range.h" to "$PROJECT_HEADER_FILES/third_party/mruby/include/mruby/range.h"
+        file MRUBY_re_h "$HARMONY_VERSION_PATH/third_party/mruby/mruby-2.0.x/include/mruby/re.h" to "$PROJECT_HEADER_FILES/third_party/mruby/include/mruby/re.h"
+        file MRUBY_string_h "$HARMONY_VERSION_PATH/third_party/mruby/mruby-2.0.x/include/mruby/string.h" to "$PROJECT_HEADER_FILES/third_party/mruby/include/mruby/string.h"
+        file MRUBY_throw_h "$HARMONY_VERSION_PATH/third_party/mruby/mruby-2.0.x/include/mruby/throw.h" to "$PROJECT_HEADER_FILES/third_party/mruby/include/mruby/throw.h"
+        file MRUBY_value_h "$HARMONY_VERSION_PATH/third_party/mruby/mruby-2.0.x/include/mruby/value.h" to "$PROJECT_HEADER_FILES/third_party/mruby/include/mruby/value.h"
+        file MRUBY_variable_h "$HARMONY_VERSION_PATH/third_party/mruby/mruby-2.0.x/include/mruby/variable.h" to "$PROJECT_HEADER_FILES/third_party/mruby/include/mruby/variable.h"
+        file MRUBY_version_h "$HARMONY_VERSION_PATH/third_party/mruby/mruby-2.0.x/include/mruby/version.h" to "$PROJECT_HEADER_FILES/third_party/mruby/include/mruby/version.h"
+    endif
+
+    ifblock MRUBY_VERSION = "1.4.1"
+        template MRUBY_mrbconf_h "$HARMONY_VERSION_PATH/third_party/mruby/mruby-1.4.x/include/mrbconf.h.ftl" to "$PROJECT_HEADER_FILES/app/system_config/$CONFIGURATION/mrbconf.h"
+        file MRUBY_mruby_h "$HARMONY_VERSION_PATH/third_party/mruby/mruby-1.4.x/include/mruby.h" to "$PROJECT_HEADER_FILES/third_party/mruby/include/mruby.h"
+
+        file MRUBY_array_h "$HAMONY_VERSION_PATH/third_party/mruby/mruby-1.4.x/include/mruby/array.h" to "$PROJECT_HEADER_FILES/third_party/mruby/include/mruby/array.h"
+        file MRUBY_boxing_nan_h "$HAMONY_VERSION_PATH/third_party/mruby/mruby-1.4.x/include/mruby/boxing_nan.h" to "$PROJECT_HEADER_FILES/third_party/mruby/include/mruby/boxing_nan.h"
+        file MRUBY_boxing_no_h "$HAMONY_VERSION_PATH/third_party/mruby/mruby-1.4.x/include/mruby/boxing_no.h" to "$PROJECT_HEADER_FILES/third_party/mruby/include/mruby/boxing_no.h"
+        file MRUBY_boxing_word_h "$HAMONY_VERSION_PATH/third_party/mruby/mruby-1.4.x/include/mruby/boxing_word.h" to "$PROJECT_HEADER_FILES/third_party/mruby/include/mruby/boxing_word.h"
+        file MRUBY_class_h "$HAMONY_VERSION_PATH/third_party/mruby/mruby-1.4.x/include/mruby/class.h" to "$PROJECT_HEADER_FILES/third_party/mruby/include/mruby/class.h"
+        file MRUBY_common_h "$HAMONY_VERSION_PATH/third_party/mruby/mruby-1.4.x/include/mruby/common.h" to "$PROJECT_HEADER_FILES/third_party/mruby/include/mruby/common.h"
+        file MRUBY_compile_h "$HAMONY_VERSION_PATH/third_party/mruby/mruby-1.4.x/include/mruby/compile.h" to "$PROJECT_HEADER_FILES/third_party/mruby/include/mruby/compile.h"
+        file MRUBY_data_h "$HAMONY_VERSION_PATH/third_party/mruby/mruby-1.4.x/include/mruby/data.h" to "$PROJECT_HEADER_FILES/third_party/mruby/include/mruby/data.h"
+        file MRUBY_debug_h "$HAMONY_VERSION_PATH/third_party/mruby/mruby-1.4.x/include/mruby/debug.h" to "$PROJECT_HEADER_FILES/third_party/mruby/include/mruby/debug.h"
+        file MRUBY_dump_h "$HAMONY_VERSION_PATH/third_party/mruby/mruby-1.4.x/include/mruby/dump.h" to "$PROJECT_HEADER_FILES/third_party/mruby/include/mruby/dump.h"
+        file MRUBY_error_h "$HAMONY_VERSION_PATH/third_party/mruby/mruby-1.4.x/include/mruby/error.h" to "$PROJECT_HEADER_FILES/third_party/mruby/include/mruby/error.h"
+        file MRUBY_gc_h "$HAMONY_VERSION_PATH/third_party/mruby/mruby-1.4.x/include/mruby/gc.h" to "$PROJECT_HEADER_FILES/third_party/mruby/include/mruby/gc.h"
+        file MRUBY_hash_h "$HAMONY_VERSION_PATH/third_party/mruby/mruby-1.4.x/include/mruby/hash.h" to "$PROJECT_HEADER_FILES/third_party/mruby/include/mruby/hash.h"
+        file MRUBY_irep_h "$HAMONY_VERSION_PATH/third_party/mruby/mruby-1.4.x/include/mruby/irep.h" to "$PROJECT_HEADER_FILES/third_party/mruby/include/mruby/irep.h"
+        file MRUBY_istruct_h "$HAMONY_VERSION_PATH/third_party/mruby/mruby-1.4.x/include/mruby/istruct.h" to "$PROJECT_HEADER_FILES/third_party/mruby/include/mruby/istruct.h"
+        file MRUBY_khash_h "$HAMONY_VERSION_PATH/third_party/mruby/mruby-1.4.x/include/mruby/khash.h" to "$PROJECT_HEADER_FILES/third_party/mruby/include/mruby/khash.h"
+        file MRUBY_numeric_h "$HAMONY_VERSION_PATH/third_party/mruby/mruby-1.4.x/include/mruby/numeric.h" to "$PROJECT_HEADER_FILES/third_party/mruby/include/mruby/numeric.h"
+        file MRUBY_object_h "$HAMONY_VERSION_PATH/third_party/mruby/mruby-1.4.x/include/mruby/object.h" to "$PROJECT_HEADER_FILES/third_party/mruby/include/mruby/object.h"
+        file MRUBY_opcode_h "$HAMONY_VERSION_PATH/third_party/mruby/mruby-1.4.x/include/mruby/opcode.h" to "$PROJECT_HEADER_FILES/third_party/mruby/include/mruby/opcode.h"
+        file MRUBY_proc_h "$HAMONY_VERSION_PATH/third_party/mruby/mruby-1.4.x/include/mruby/proc.h" to "$PROJECT_HEADER_FILES/third_party/mruby/include/mruby/proc.h"
+        file MRUBY_range_h "$HAMONY_VERSION_PATH/third_party/mruby/mruby-1.4.x/include/mruby/range.h" to "$PROJECT_HEADER_FILES/third_party/mruby/include/mruby/range.h"
+        file MRUBY_re_h "$HAMONY_VERSION_PATH/third_party/mruby/mruby-1.4.x/include/mruby/re.h" to "$PROJECT_HEADER_FILES/third_party/mruby/include/mruby/re.h"
+        file MRUBY_string_h "$HAMONY_VERSION_PATH/third_party/mruby/mruby-1.4.x/include/mruby/string.h" to "$PROJECT_HEADER_FILES/third_party/mruby/include/mruby/string.h"
+        file MRUBY_throw_h "$HAMONY_VERSION_PATH/third_party/mruby/mruby-1.4.x/include/mruby/throw.h" to "$PROJECT_HEADER_FILES/third_party/mruby/include/mruby/throw.h"
+        file MRUBY_value_h "$HAMONY_VERSION_PATH/third_party/mruby/mruby-1.4.x/include/mruby/value.h" to "$PROJECT_HEADER_FILES/third_party/mruby/include/mruby/value.h"
+        file MRUBY_variable_h "$HAMONY_VERSION_PATH/third_party/mruby/mruby-1.4.x/include/mruby/variable.h" to "$PROJECT_HEADER_FILES/third_party/mruby/include/mruby/variable.h"
+        file MRUBY_version_h "$HAMONY_VERSION_PATH/third_party/mruby/mruby-1.4.x/include/mruby/version.h" to "$PROJECT_HEADER_FILES/third_party/mruby/include/mruby/version.h"
+
+    endif
+
+endif
