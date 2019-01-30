@@ -4,3 +4,9 @@
 [submodule "Harmony/mruby-2.0.x"]
 	path = Harmony/mruby-2.0.x
 	url = https://github.com/kimushu/mruby.git
+[submodule "mruby/mruby-1.4.1"]
+	path = mruby/mruby-1.4.1
+	url = https://github.com/kimushu/mruby.git
+[submodule "mruby/mruby-2.0.0"]
+	path = mruby/mruby-2.0.0
+	url = https://github.com/kimushu/mruby.git
